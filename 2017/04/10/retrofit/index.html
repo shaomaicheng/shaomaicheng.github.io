@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Head tag -->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Android搬砖工">
+    <meta name="keyword" content="">
+    <meta name="theme-color" content="#600090">
+    <meta name="msapplication-navbutton-color" content="#600090">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="#600090">
+    <link rel="shortcut icon" href="https://cdn4.iconfinder.com/data/icons/ionicons/512/icon-person-128.png">
+    <link rel="alternate" type="application/atom+xml" title="烧麦" href="/atom.xml">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css">
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.css">
+    <title>
+        
+        retrofit源码解析｜undefined
+        
+    </title>
+
+    <link rel="canonical" href="http://shaomaicheng.github.io/2017/04/10/retrofit/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/blog-style.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+</head>
+
+<style>
+
+    header.intro-header {
+        background-image: url('')
+    }
+</style>
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="" class="animated fadeIn">
+<!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top " id="nav-top" data-ispost = "true" data-istags="false
+" data-ishome = "false" >
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand animated pulse" href="/">
+                <span class="brand-logo">
+                    烧麦
+                </span>
+                's Blog
+            </a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <!-- /.navbar-collapse -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+					
+                    
+					
+					
+                </ul>
+            </div>
+        </div>
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+//    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+<!-- Main Content -->
+
+<!--only post-->
+
+
+<img class="wechat-title-img"
+     src="">
+
+
+<style>
+    
+    header.intro-header {
+        background-image: url('')
+    }
+
+    
+</style>
+
+<header class="intro-header">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 text-center">
+                <div class="post-heading">
+                    <h1>retrofit源码解析</h1>
+                    
+                    <span class="meta">
+                         作者 烧麦
+                        <span>
+                          日期 2017-04-10
+                         </span>
+                    </span>
+                    <div class="tags text-center">
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="post-title-haojen">
+        <span>
+            retrofit源码解析
+        </span>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+            <!-- Post Container -->
+            <div class="col-lg-8 col-lg-offset-1 col-sm-9 post-container">
+                <p>在Android客户端的项目网络请求实践中，对retrofit进行了实践和源码的阅读。从retrofit的用法入手，对retrofit进行解析。<br>首先看一下retrofit的基本用法：<br>第一步创建retrofit对象：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Retrofit retrofit = new Retrofit.Builder()</span><br><span class="line">          .baseUrl(baseUrl)</span><br><span class="line">          .build();</span><br></pre></td></tr></table></figure></p>
+<p>第二步创建一个service接口，接口的组成如下<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">public interface NetWorkService &#123;</span><br><span class="line">    @FormUrlEncoded</span><br><span class="line">    @Post(&quot;/reativePath&quot;)</span><br><span class="line">    Call&lt;ResponseBody&gt; getResponse(@Field(&quot;param&quot;) String param);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>第三进行网络请求<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">NetWorkService service = retrofit.create(NetWorkService.class);</span><br><span class="line">Call&lt;ResponseBody&gt; call = service.getResponse(param);</span><br></pre></td></tr></table></figure></p>
+<p>查看Retrofit的类结构，使用了经典的Builder设计模式，通过Builder的方法我们通常可以设置OkHttpClient、HttpUrl、ConverterFactory、CallAdapterFactory等。<br>查看Retrofit的create方法<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">return (T) Proxy.newProxyInstance(service.getClassLoader(), new Class&lt;?&gt;[] &#123; service &#125;,</span><br><span class="line">        new InvocationHandler() &#123;</span><br><span class="line">          private final Platform platform = Platform.get();</span><br><span class="line"></span><br><span class="line">          @Override public Object invoke(Object proxy, Method method, Object[] args)</span><br><span class="line">              throws Throwable &#123;</span><br><span class="line">            // If the method is a method from Object then defer to normal invocation.</span><br><span class="line">            if (method.getDeclaringClass() == Object.class) &#123;</span><br><span class="line">              return method.invoke(this, args);</span><br><span class="line">            &#125;</span><br><span class="line">            if (platform.isDefaultMethod(method)) &#123;</span><br><span class="line">              return platform.invokeDefaultMethod(method, service, proxy, args);</span><br><span class="line">            &#125;</span><br><span class="line">            ServiceMethod&lt;Object, Object&gt; serviceMethod =</span><br><span class="line">                (ServiceMethod&lt;Object, Object&gt;) loadServiceMethod(method);</span><br><span class="line">            OkHttpCall&lt;Object&gt; okHttpCall = new OkHttpCall&lt;&gt;(serviceMethod, args);</span><br><span class="line">            return serviceMethod.callAdapter.adapt(okHttpCall);</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;);</span><br></pre></td></tr></table></figure></p>
+<p>这里使用了Java的动态代理模式，关于代理模式和动态代理，可以查看<a href="http://a.codekk.com/detail/Android/Caij/%E5%85%AC%E5%85%B1%E6%8A%80%E6%9C%AF%E7%82%B9%E4%B9%8B%20Java%20%E5%8A%A8%E6%80%81%E4%BB%A3%E7%90%86" target="_blank" rel="noopener">这里</a>。<br>在create中，创建了一个最终暴露给我们的代理类A，类型为T，也就是xxService，内部的委托类B为service，也是我们的类xxService。其中起到2个类的桥接作用的是一个实现了InvocationHandler接口的匿名类C，C为A的委托类，为B的代理类。最终A在外部对接口方法的调用会传递到C中，C再将调用传递给B。<br>在匿名类中<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">ServiceMethod&lt;Object, Object&gt; serviceMethod =</span><br><span class="line">                (ServiceMethod&lt;Object, Object&gt;) loadServiceMethod(method);</span><br><span class="line">            OkHttpCall&lt;Object&gt; okHttpCall = new OkHttpCall&lt;&gt;(serviceMethod, args);</span><br><span class="line">            return serviceMethod.callAdapter.adapt(okHttpCall);</span><br></pre></td></tr></table></figure></p>
+<p>这一段代码就是在代理类中进行的调用。我们进入这几个方法可以看到retrofit对于xxService的整个处理。<br>  查看loadService的代码<br> <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">ServiceMethod&lt;?, ?&gt; result = serviceMethodCache.get(method);</span><br><span class="line">    if (result != null) return result;</span><br><span class="line">synchronized (serviceMethodCache) &#123;</span><br><span class="line">      result = serviceMethodCache.get(method);</span><br><span class="line">      if (result == null) &#123;</span><br><span class="line">        result = new ServiceMethod.Builder&lt;&gt;(this, method).build();</span><br><span class="line">        serviceMethodCache.put(method, result);</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<p>在Retrofit类中维护了一个Map用来存放ServiceMethod，如果method对象已经存在就会使用已经存在的缓存对象，避免每次对象在代理类里面运行的开销。<br>进入ServiceMethod的build方法，我们可以看到retrofit对service的处理。我将service接口的处理过程梳理了一下</p>
+<ol>
+<li>创建CallAdapter</li>
+<li>创建处理返回数据格式的Converter</li>
+<li>解析方法上方的注解。例如@FormUrlEncoded、@Post</li>
+<li>新建参数处理对象ParamterHandler</li>
+<li>对service接口中的方法参数进行读取和解析，在这里，会对参数注解进行解析。</li>
+</ol>
+<p>接下来我们对每一个步骤进行解析</p>
+<p>###CallAdapter<br>service的build中会调用retrofit的callAdapter方法，继而调用nextCallAdapter方法。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">int start = adapterFactories.indexOf(skipPast) + 1;</span><br><span class="line">    for (int i = start, count = adapterFactories.size(); i &lt; count; i++) &#123;</span><br><span class="line">      CallAdapter&lt;?, ?&gt; adapter = adapterFactories.get(i).get(returnType, annotations, this);</span><br><span class="line">      if (adapter != null) &#123;</span><br><span class="line">        return adapter;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<p>我们会取出retrofit的存放adapter的list中第一个不为空的adapter作为最后使用的adapter，并且根据returntype去除CallAdapter，结合动态代理部分可以看出，retrofit会把Call根据我们的CallAdapter转换为想要的类型。例如retrofit+rxjava使用的时候把Call转化为一个Observable。</p>
+<h3 id="Converter"><a href="#Converter" class="headerlink" title="Converter"></a>Converter</h3><p>接下来会执行createResponseConverter方法，这个主要是解析返回的数据。在里面会调用retrofit的responseBodyConverter方法，类似callAdapter，接下来会调用nextResponseBodyConverter方法<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">int start = converterFactories.indexOf(skipPast) + 1;</span><br><span class="line">    for (int i = start, count = converterFactories.size(); i &lt; count; i++) &#123;</span><br><span class="line">      Converter&lt;ResponseBody, ?&gt; converter =</span><br><span class="line">          converterFactories.get(i).responseBodyConverter(type, annotations, this);</span><br><span class="line">      if (converter != null) &#123;</span><br><span class="line">        //noinspection unchecked</span><br><span class="line">        return (Converter&lt;ResponseBody, T&gt;) converter;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<p>我们会拿到retrofit中存放converter的list中第一个获取到ConVerter对象不为空的作为方法的返回值。例如GsonResponseBodyConverter中就会把返回的response数据利用Gson解析为对应的实体类对象。<br>而且在retrofit的Build类的build方法中，在存adapter的list里面加入了默认的对象<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">adapterFactories.add(platform.defaultCallAdapterFactory(callbackExecutor));</span><br></pre></td></tr></table></figure></p>
+<p>默认添加的是一个DefaultCallAdapterFactory对象<br>而converter的list则会默认添加一个BuiltInConverters对象<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Builder(Platform platform) &#123;</span><br><span class="line">      this.platform = platform;</span><br><span class="line">      // Add the built-in converter factory first. This prevents overriding its behavior but also</span><br><span class="line">      // ensures correct behavior when using converters that consume all types.</span><br><span class="line">      converterFactories.add(new BuiltInConverters());</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<p>###parseMethodAnnotation<br>接下来会对retrofit的xxService接口进行方法注解的解析<br>截取一小段代码进行分析：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">if (annotation instanceof POST) &#123;</span><br><span class="line">   parseHttpMethodAndPath(&quot;POST&quot;, ((POST) annotation).value(), true);</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure></p>
+<p>其中最后一个参数的true和false是methodService中的hasBody变量<br>根据源码我们可以将方法注解分类如下：</p>
+<ol>
+<li>Http方法 hasBody为false<ul>
+<li>delete</li>
+<li>get</li>
+<li>head</li>
+<li>options</li>
+</ul>
+</li>
+<li>Http方法 hasBody为true<ul>
+<li>patch</li>
+<li>post</li>
+<li>put</li>
+</ul>
+</li>
+<li>非http请求<ul>
+<li>Http</li>
+<li>Headers</li>
+<li>FormUrlEncoded</li>
+<li>Multipart<br>其中FormUrlEncoded表示参数编码为表单，multipart为文件上传。2者互斥不得同时存在。<br>接下来会对方法参数的路径进行解析以及验证<br>如果方法注解为headers，则表示里面为http头信息，会单独进行解析。</li>
+</ul>
+</li>
+</ol>
+<p>###ParameterHandler<br>创建ParamterHandler对象，这个对象是用来处理参数的。在后面的request构建会使用到。其中，每一个method的注解都有它对应的ParamterHandler对象。</p>
+<p>###parseParameter<br>在serviceMethod对象build前的最后一步是解析method的参数注解，会将读取到的数据传入ParamterHandler对象中，最终拼成http请求的参数</p>
+<p>最后，在Retrofit的create中，我们会返回一个Call对象，这个对象实际在默认情况下是一个ExecutorCallbackCall对象，ExecutorCallbackCall对象内部包裹了一个OkHttpCall对象。</p>
+<p>###OkHttpCall<br>OkHttpCall对象是实际上执行网络请求的类，这个对象实际是包装了OkHttp里面的Call对象。最终在enqueue等方法中会调用OkHttp的对应的方法。</p>
+<p>####小结<br>陆陆续续看了一段时间的retrofit源码，虽然这个库的代码不多，但是设计思路非常的牛逼。我们应该多吸收这种优秀三方库的思想到我们自己的代码中</p>
+
+                <hr>
+                
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2018/01/12/weviewinit/" data-toggle="tooltip" data-placement="top"
+                           title="WebView深究之Android是如何实现webview初始化的">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/2017/02/23/kotlininit/" data-toggle="tooltip" data-placement="top"
+                           title="初探Kotlin和anko进行Android开发">Next Post &rarr;</a>
+                    </li>
+                    
+                </ul>
+
+                
+
+                
+
+
+                <!--加入新的评论系统-->
+                
+                <!-- 来必力City版安装代码 -->
+                <div id="lv-container" data-id="city" data-uid="MTAyMC8zNTgzMS8xMjM2Nw">
+                    <script type="text/javascript">
+                        (function(d, s) {
+                            var j, e = d.getElementsByTagName(s)[0];
+
+                            if (typeof LivereTower === 'function') { return; }
+
+                            j = d.createElement(s);
+                            j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+                            j.async = true;
+
+                            e.parentNode.insertBefore(j, e);
+                        })(document, 'script');
+                    </script>
+                    <noscript> 为正常使用来必力评论功能请激活JavaScript</noscript>
+                </div>
+                <!-- City版安装代码已完成 -->
+                
+            </div>
+
+            <div class="hidden-xs col-sm-3 toc-col">
+                <div class="toc-wrap">
+                    <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#Converter"><span class="toc-text">Converter</span></a></li></ol>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Sidebar Container -->
+
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+
+                <!-- Friends Blog -->
+                
+                <div style="margin-top: 20px;">
+                    <h5 class="text-center">友链</h5>
+                    <ul class="list-inline text-center">
+                        
+                        <li><a href="http://liangfei.me/">梁飞</a></li>
+                        
+                        <li><a href="https://geminiwen.com/">温省长</a></li>
+                        
+                    </ul>
+                </div>
+                
+            </div>
+        </div>
+
+    </div>
+</article>
+
+
+
+
+
+
+
+<!-- Footer -->
+<!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 text-center">
+                <br>
+                <ul class="list-inline text-center">
+                
+                
+                
+
+                
+
+                
+
+                
+                    <li>
+                        <a target="_blank"  href="https://github.com/shaomaicheng">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                
+
+                
+
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; 烧麦 2018
+                    <br>
+                    <!-- <span id="busuanzi_container_site_pv" style="font-size: 12px;">PV: <span id="busuanzi_value_site_pv"></span> Times</span>
+                    <br>
+                    Theme by <a href="https://haojen.github.io/">Haojen Ma</a> -->
+                </p>
+
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js"></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js"></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/blog.js"></script>
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("http://shaomaicheng.github.io/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("//cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+<!-- Google Analytics -->
+
+
+
+<!-- Baidu Tongji -->
+
+
+<!-- swiftype -->
+<script type="text/javascript">
+  (function(w,d,t,u,n,s,e){w['SwiftypeObject']=n;w[n]=w[n]||function(){
+  (w[n].q=w[n].q||[]).push(arguments);};s=d.createElement(t);
+  e=d.getElementsByTagName(t)[0];s.async=1;s.src=u;e.parentNode.insertBefore(s,e);
+  })(window,document,'script','//s.swiftypecdn.com/install/v2/st.js','_st');
+
+  _st('install','','2.0.0');
+</script>
+
+<script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<!--wechat title img-->
+<img class="wechat-title-img" src="https://oe9nbfytu.qnssl.com/subject%2F6c138472714d41aba7d219fc5a896940">
+</body>
+
+</html>

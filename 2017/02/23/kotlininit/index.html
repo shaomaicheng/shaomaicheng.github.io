@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Head tag -->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Android搬砖工">
+    <meta name="keyword" content="">
+    <meta name="theme-color" content="#600090">
+    <meta name="msapplication-navbutton-color" content="#600090">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="#600090">
+    <link rel="shortcut icon" href="https://cdn4.iconfinder.com/data/icons/ionicons/512/icon-person-128.png">
+    <link rel="alternate" type="application/atom+xml" title="烧麦" href="/atom.xml">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css">
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.css">
+    <title>
+        
+        初探Kotlin和anko进行Android开发｜undefined
+        
+    </title>
+
+    <link rel="canonical" href="http://shaomaicheng.github.io/2017/02/23/kotlininit/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/blog-style.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+</head>
+
+<style>
+
+    header.intro-header {
+        background-image: url('')
+    }
+</style>
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="" class="animated fadeIn">
+<!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top " id="nav-top" data-ispost = "true" data-istags="false
+" data-ishome = "false" >
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand animated pulse" href="/">
+                <span class="brand-logo">
+                    烧麦
+                </span>
+                's Blog
+            </a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <!-- /.navbar-collapse -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+					
+                    
+					
+					
+                </ul>
+            </div>
+        </div>
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+//    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+<!-- Main Content -->
+
+<!--only post-->
+
+
+<img class="wechat-title-img"
+     src="">
+
+
+<style>
+    
+    header.intro-header {
+        background-image: url('')
+    }
+
+    
+</style>
+
+<header class="intro-header">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 text-center">
+                <div class="post-heading">
+                    <h1>初探Kotlin和anko进行Android开发</h1>
+                    
+                    <span class="meta">
+                         作者 烧麦
+                        <span>
+                          日期 2017-02-23
+                         </span>
+                    </span>
+                    <div class="tags text-center">
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="post-title-haojen">
+        <span>
+            初探Kotlin和anko进行Android开发
+        </span>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+            <!-- Post Container -->
+            <div class="col-lg-8 col-lg-offset-1 col-sm-9 post-container">
+                <p>kotlin是一门基于jvm的编程语言，最近进行了关于kotlin和 anko的研究。并且结合现在的APP设计模式，设想了初步的开发方式。并且准备应用在新的项目中。</p>
+<p><strong>关于Kotlin和anko</strong><br>Kotlin是大名鼎鼎的JB公司开发的jvm语言，官网地址为；<a href="http://kotlinlang.org/" target="_blank" rel="noopener">http://kotlinlang.org/</a><br>官网的介绍为<br><code>Statically typed programming language for the JVM, Android and the browser</code></p>
+<p>Kotlin的设计思想非常的轻量，尽可能的去复用java代码，不到万不得已的时候，一般不会自己去实现一套大而全的库。这使得Kotlin非常的轻量，集成到Android的project并不会很明显的影响最终的打包大小。</p>
+<p>关于Kotlin的优点，自己总结了几点：</p>
+<ol>
+<li>和Java的无缝调用，这在初期不需要投入非常大的精力，即使遇到搞不定的坑，也不必担心影响业务开发的进度，直接换成java就好了</li>
+<li>大量的语法糖，使得代码非常的简洁，熟悉之后的开发效率也要高于Java。例如扩展函数，简单的封装再也不需要写一大堆Utils工具类，直接灵活的给某些类添加扩展方法就可以了。<br>比如希望Activity中有一个弹出Toast的方法，就可以写成<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">inline fun Activity.toast(message : Int) &#123;</span><br><span class="line">        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>这样在Activity类中就多出了一个toast方法，实际上在anko中，也有大量已经写好的扩展方法，可以直接使用DSL语法去写UI。<br>再例如when语句<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">when(x) &#123;</span><br><span class="line">  1-&gt; &#123;&#125;</span><br><span class="line">  2-&gt; &#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>很明显比<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">switch(x) &#123;</span><br><span class="line">  case 1:</span><br><span class="line">    break;</span><br><span class="line">  case 2:</span><br><span class="line">    break;</span><br><span class="line">  default:</span><br><span class="line">    break;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>要简洁很多。</p>
+<ol start="3">
+<li>更加安全，Kotlin似乎比较想消灭空引用，在Java中，调用一个null对象会抛出NullPointException，在Kotlin中，不能为空的对象，例如String对象，会写成<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">var a: String? = &quot;abc&quot;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>这个时候只有变量为非空的时候才会调用方法</p>
+<ol start="4">
+<li>良好的环境和社区<br>Kotlin目前还是属于比较新的技术，很多人也都在尝试它的有点。包括Rx系列也出了RxKotlin，既RxJava的Kotlin版</li>
+</ol>
+<p>至于更深入的比如其他有点和语言特性，包括和Java的对比，我会继续研究下去。下面用一个登录界面的实例，来讲解一下Kotlin+anko开发的方式入门</p>
+<p>首先是Kotlin和anko的获取，在这里不多说<br>Kotlin可以在Android Studio装插件进行支持。关于Anko，有几个坑，我这里指出来一下。<br>Anko的github地址为<a href="https://github.com/Kotlin/anko" target="_blank" rel="noopener">https://github.com/Kotlin/anko</a><br>在JB的gitbook文档里面关于Gradle获取anko的代码没有给全，导致坑了我。在这我给出我的project里面的gradle代码。方便大家参考<br>首先在project的build文件加入如下代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">dependencies &#123;</span><br><span class="line">        classpath &apos;com.android.tools.build:gradle:2.2.3&apos;</span><br><span class="line">        classpath &quot;org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version&quot;  //这是需要你加入的</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">allprojects &#123;</span><br><span class="line">    repositories &#123;</span><br><span class="line">        jcenter()</span><br><span class="line">        maven &#123;url &apos;https://dl.bintray.com/jetbrains/anko&apos;&#125; //这是你需要加入的</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>然后，在你app moudle的build文件里面添加依赖：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">//anko</span><br><span class="line">    compile &quot;org.jetbrains.anko:anko-sdk15:0.9.1&quot; // So here it&apos;s 15 too</span><br><span class="line">    compile &quot;org.jetbrains.anko:anko-appcompat-v7:0.9.1&quot;</span><br><span class="line">    compile &quot;org.jetbrains.anko:anko-design:0.9.1&quot;</span><br><span class="line">    compile &quot;org.jetbrains.anko:anko-recyclerview-v7:0.9.1&quot;</span><br></pre></td></tr></table></figure></p>
+<p>相信这个大家都能看明白，就不多说了。</p>
+<p>接下来介绍下这个登录页面的结构<br>设计模式使用平时常用的MVP模式，其中因为P层为逻辑层，负责数据处理、网络请求，比较严谨和复杂，所以，目前阶段设定的是纯java进行编写。<br>而view层，根据kotlin的优势，选择使用anko进行编写，不使用xml进行编写。<br>这样的好处在anko的github README文件中是这样描述的：</p>
+<ul>
+<li>不安全</li>
+<li>没有空安全</li>
+<li>迫使你为了每一个布局去写很多相似甚至重复的代码</li>
+<li>XML在设备上浪费CPU时间和电量（应该是需要进行解析的原因）</li>
+<li>不允许代码重用（没有完全理解，可能说的不是include标签而是自定义的layout）<br>至于Contract接口以及实体对象，可以直接使用Kotlin编写，第一为了语法简洁，第二不用写一大堆setter/getter方法</li>
+</ul>
+<p>现编写MainActivity类，进行UI展示和事件等逻辑<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">class MainActivity : AppCompatActivity(), MainContract.View &#123;</span><br><span class="line">    override fun onCreate(savedInstanceState: Bundle?) &#123;</span><br><span class="line">        super.onCreate(savedInstanceState)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>接下来在onCreate中编写ui布局，登录布局比较简单，就是2个输入框和一个按钮，当然为了试用多点的常见控件，我在最上方添加了Toolbar<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br></pre></td><td class="code"><pre><span class="line">relativeLayout &#123;</span><br><span class="line"></span><br><span class="line">            var mToolbar =</span><br><span class="line">            toolbar(R.style.Base_ThemeOverlay_AppCompat_Dark_ActionBar) &#123;</span><br><span class="line">                id = ID_TOOLBAR</span><br><span class="line">                title = &quot;登录&quot;</span><br><span class="line">                backgroundColor = ContextCompat.getColor(this@MainActivity, R.color.colorPrimary)</span><br><span class="line"></span><br><span class="line">                popupTheme = R.style.Base_ThemeOverlay_AppCompat_Light</span><br><span class="line">                inflateMenu(R.menu.main)</span><br><span class="line"></span><br><span class="line">                setNavigationIcon(R.mipmap.img_back_white)</span><br><span class="line"></span><br><span class="line">                onMenuItemClick &#123;</span><br><span class="line">                    menuItem -&gt;</span><br><span class="line">                    val itemId = menuItem!!.itemId</span><br><span class="line">                    when (itemId) &#123;</span><br><span class="line">                        R.id.menu_main -&gt; &#123;</span><br><span class="line">                            toast(R.string.main_toast)</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                    false</span><br><span class="line">                    &#125;</span><br><span class="line"></span><br><span class="line">                lparams &#123;</span><br><span class="line">                    width = matchParent</span><br><span class="line">                    height = wrapContent</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                setNavigationOnClickListener &#123;</span><br><span class="line">                    finish()</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            var mUserEdit = editText &#123;</span><br><span class="line">                id = ID_USER_EDIT</span><br><span class="line">                hint = &quot;请输入同户名&quot;</span><br><span class="line">                maxLines=1</span><br><span class="line"></span><br><span class="line">                lparams &#123;</span><br><span class="line">                    width = matchParent</span><br><span class="line">                    height = wrapContent</span><br><span class="line">                    margin=dip(8)</span><br><span class="line">                    centerInParent()</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            var mPsdEdit = editText &#123;</span><br><span class="line">                id= ID_PSD_EDIT</span><br><span class="line">                hint=&quot;请输入密码&quot;</span><br><span class="line">                maxLines=1</span><br><span class="line">                maxWidth = 16</span><br><span class="line"></span><br><span class="line">                lparams &#123;</span><br><span class="line">                    width = matchParent</span><br><span class="line">                    height = wrapContent</span><br><span class="line">                    margin = dip(8)</span><br><span class="line">                    below(ID_USER_EDIT)</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">            var mButton = button(&quot;登录&quot;) &#123;</span><br><span class="line">                id= ID_BTN_LOGIN</span><br><span class="line"></span><br><span class="line">                onClick &#123;</span><br><span class="line">                    var username = mUserEdit.text.toString()</span><br><span class="line">                    var password = mPsdEdit.text.toString()</span><br><span class="line"></span><br><span class="line">                    mPresenter!!.login(username,password)</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                lparams &#123;</span><br><span class="line">                    width= matchParent</span><br><span class="line">                    height = wrapContent</span><br><span class="line">                    margin = dip(8)</span><br><span class="line">                    below(ID_PSD_EDIT)</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure></p>
+<p>代码中的id使用了常量，在Kotlin中没有static的概念，但是有一个companion object(伴随对象)可以模拟实现类似static的功能。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">companion object static &#123;</span><br><span class="line">        val ID_TOOLBAR: Int = 1</span><br><span class="line">        val ID_USER_EDIT: Int = 2</span><br><span class="line">        val ID_PSD_EDIT: Int = 3</span><br><span class="line">        val ID_BTN_LOGIN: Int = 4</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<p>可以看到，这样编写UI的代码非常的简洁。而且可读性非常的高。相信对XML写布局比较熟悉的同学都能看懂这里面代码的含义。<br>比如一个输入框<br>在xml中可能是<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&lt;EditText</span><br><span class="line">    android:id=&quot;@+id/user_edit&quot;</span><br><span class="line">    android:width=&quot;match_parent&quot;</span><br><span class="line">    android:height=&quot;wrap_content&quot;</span><br><span class="line">    android:hint=&quot;请输入用户名&quot;</span><br><span class="line">    android:xxx=&quot;...&quot;</span><br><span class="line">    .../&gt;</span><br></pre></td></tr></table></figure></p>
+<p>然后在java代码中通过findViewById获取，非常的麻烦<br>但是通过anko库，就可以实现如下写法：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">var mUserEdit = editText &#123;</span><br><span class="line">                id = ID_USER_EDIT</span><br><span class="line">                hint = &quot;请输入同户名&quot;</span><br><span class="line">                maxLines=1</span><br><span class="line"></span><br><span class="line">                lparams &#123;</span><br><span class="line">                    width = matchParent</span><br><span class="line">                    height = wrapContent</span><br><span class="line">                    margin=dip(8)</span><br><span class="line">                    centerInParent()</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br></pre></td></tr></table></figure></p>
+<p>非常的简洁和高效，同时官方还出了一个Android Stduio插件，叫做anko SDL preview，不过这个插件我用不了，暂时还不支持AS2.2之后版本。关于更多的anko知识可以参考anko的github</p>
+<p>接下来编写BaseView和BasePresenter接口<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">interface BaseView&lt;T&gt; &#123;</span><br><span class="line">    fun setPresenter(presenter: T)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">interface BasePresenter</span><br></pre></td></tr></table></figure>
+<p>使用Kotlin编写MainContract接口，这个接口建立起了V层和P层的通信<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">interface MainContract &#123;</span><br><span class="line">    interface View : BaseView&lt;Presenter&gt; &#123;</span><br><span class="line">        fun login()</span><br><span class="line">        fun loginNUll()</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    interface Presenter : BasePresenter &#123;</span><br><span class="line">        fun login(username: String, password: String)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>使用Java编写P层代码<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">public class MainPresenter implements MainContract.Presenter &#123;</span><br><span class="line"></span><br><span class="line">    private MainContract.View mView;</span><br><span class="line"></span><br><span class="line">    public MainPresenter(MainContract.View view) &#123;</span><br><span class="line">        mView = view;</span><br><span class="line">        mView.setPresenter(this);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void login(String username, String password) &#123;</span><br><span class="line">        if (TextUtils.isEmpty(username) || TextUtils.isEmpty(password)) &#123;</span><br><span class="line">            mView.loginNUll();</span><br><span class="line">            return;</span><br><span class="line">        &#125;</span><br><span class="line">        mView.login();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这里只是模拟了下登录的逻辑，并没有去真的实现一个登录<br>回到MainActivity，在这里加入我们的代码<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">var mPresenter : MainContract.Presenter? = null</span><br></pre></td></tr></table></figure></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">override fun setPresenter(presenter: MainContract.Presenter) &#123;</span><br><span class="line">    mPresenter = presenter!!</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>实现V层应该实现的回调方法：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">override fun loginNUll() &#123;</span><br><span class="line">    toast(&quot;用户名密码不得为空&quot;)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">override fun login() &#123;</span><br><span class="line">    toast(&quot;执行登录逻辑...&quot;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这里，我们就写完了一个入门的使用Kotlin和anko开发Android的实例。在这我仅仅是完成了一次入门，后面还需要进行一部分才坑（虽然成本不高），但是真正的理解Kotlin和anko的很多特性和设计思想还需要很长一段时间的认真学习。</p>
+
+                <hr>
+                
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2017/04/10/retrofit/" data-toggle="tooltip" data-placement="top"
+                           title="retrofit源码解析">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                </ul>
+
+                
+
+                
+
+
+                <!--加入新的评论系统-->
+                
+                <!-- 来必力City版安装代码 -->
+                <div id="lv-container" data-id="city" data-uid="MTAyMC8zNTgzMS8xMjM2Nw">
+                    <script type="text/javascript">
+                        (function(d, s) {
+                            var j, e = d.getElementsByTagName(s)[0];
+
+                            if (typeof LivereTower === 'function') { return; }
+
+                            j = d.createElement(s);
+                            j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+                            j.async = true;
+
+                            e.parentNode.insertBefore(j, e);
+                        })(document, 'script');
+                    </script>
+                    <noscript> 为正常使用来必力评论功能请激活JavaScript</noscript>
+                </div>
+                <!-- City版安装代码已完成 -->
+                
+            </div>
+
+            <div class="hidden-xs col-sm-3 toc-col">
+                <div class="toc-wrap">
+                    
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Sidebar Container -->
+
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+
+                <!-- Friends Blog -->
+                
+                <div style="margin-top: 20px;">
+                    <h5 class="text-center">友链</h5>
+                    <ul class="list-inline text-center">
+                        
+                        <li><a href="http://liangfei.me/">梁飞</a></li>
+                        
+                        <li><a href="https://geminiwen.com/">温省长</a></li>
+                        
+                    </ul>
+                </div>
+                
+            </div>
+        </div>
+
+    </div>
+</article>
+
+
+
+
+
+
+
+<!-- Footer -->
+<!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 text-center">
+                <br>
+                <ul class="list-inline text-center">
+                
+                
+                
+
+                
+
+                
+
+                
+                    <li>
+                        <a target="_blank"  href="https://github.com/shaomaicheng">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                
+
+                
+
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; 烧麦 2018
+                    <br>
+                    <!-- <span id="busuanzi_container_site_pv" style="font-size: 12px;">PV: <span id="busuanzi_value_site_pv"></span> Times</span>
+                    <br>
+                    Theme by <a href="https://haojen.github.io/">Haojen Ma</a> -->
+                </p>
+
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js"></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js"></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/blog.js"></script>
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("http://shaomaicheng.github.io/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("//cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+<!-- Google Analytics -->
+
+
+
+<!-- Baidu Tongji -->
+
+
+<!-- swiftype -->
+<script type="text/javascript">
+  (function(w,d,t,u,n,s,e){w['SwiftypeObject']=n;w[n]=w[n]||function(){
+  (w[n].q=w[n].q||[]).push(arguments);};s=d.createElement(t);
+  e=d.getElementsByTagName(t)[0];s.async=1;s.src=u;e.parentNode.insertBefore(s,e);
+  })(window,document,'script','//s.swiftypecdn.com/install/v2/st.js','_st');
+
+  _st('install','','2.0.0');
+</script>
+
+<script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<!--wechat title img-->
+<img class="wechat-title-img" src="https://oe9nbfytu.qnssl.com/subject%2F6c138472714d41aba7d219fc5a896940">
+</body>
+
+</html>

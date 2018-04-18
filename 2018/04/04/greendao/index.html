@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Head tag -->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Android搬砖工">
+    <meta name="keyword" content="">
+    <meta name="theme-color" content="#600090">
+    <meta name="msapplication-navbutton-color" content="#600090">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="#600090">
+    <link rel="shortcut icon" href="https://cdn4.iconfinder.com/data/icons/ionicons/512/icon-person-128.png">
+    <link rel="alternate" type="application/atom+xml" title="烧麦" href="/atom.xml">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css">
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.css">
+    <title>
+        
+        Greendao源码分析｜undefined
+        
+    </title>
+
+    <link rel="canonical" href="http://shaomaicheng.github.io/2018/04/04/greendao/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/blog-style.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+</head>
+
+<style>
+
+    header.intro-header {
+        background-image: url('')
+    }
+</style>
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="" class="animated fadeIn">
+<!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top " id="nav-top" data-ispost = "true" data-istags="false
+" data-ishome = "false" >
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand animated pulse" href="/">
+                <span class="brand-logo">
+                    烧麦
+                </span>
+                's Blog
+            </a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <!-- /.navbar-collapse -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+					
+                    
+					
+					
+                </ul>
+            </div>
+        </div>
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+//    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+<!-- Main Content -->
+
+<!--only post-->
+
+
+<img class="wechat-title-img"
+     src="">
+
+
+<style>
+    
+    header.intro-header {
+        background-image: url('')
+    }
+
+    
+</style>
+
+<header class="intro-header">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 text-center">
+                <div class="post-heading">
+                    <h1>Greendao源码分析</h1>
+                    
+                    <span class="meta">
+                         作者 烧麦
+                        <span>
+                          日期 2018-04-04
+                         </span>
+                    </span>
+                    <div class="tags text-center">
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="post-title-haojen">
+        <span>
+            Greendao源码分析
+        </span>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+            <!-- Post Container -->
+            <div class="col-lg-8 col-lg-offset-1 col-sm-9 post-container">
+                <h2 id="简述"><a href="#简述" class="headerlink" title="简述"></a>简述</h2><p>DaoMaster、具体的Dao 和 DaoSession对象为greedao生成的代码<br>从平时的使用可以看出他们的作用</p>
+<ul>
+<li>DaoMaster<br>  <code>GreenDao的总入口，负责整个库的运行，实现了SqliteOpenHelper</code></li>
+<li>DaoSession<br>  <code>会话层，操作Dao的具体对象，包括DAO对象的注册</code></li>
+<li>xxEntity<br>  <code>实体类，和表内容一一对应</code></li>
+<li>xxDao<br>  <code>生成的DAO对象，进行具体的数据库操作</code></li>
+</ul>
+<p>这几个类的关系如下UML图:<br><img src="https://upload-images.jianshu.io/upload_images/1523772-2b87d613f2c1c955.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="GreenDAO.png"></p>
+<p>Dao对象需要依赖DaoConfig对象</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">DaoConfig</span><span class="params">(Database db, Class&lt;? extends AbstractDao&lt;?, ?&gt;&gt; daoClass)</span></span></span><br></pre></td></tr></table></figure>
+<p>DaoConfig对象需要传入具体的DaoClass类型</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">reflectProperties(Class&lt;? extends AbstractDao&lt;?, ?&gt;&gt; daoClass))</span><br></pre></td></tr></table></figure>
+<p>获取DAO里面的Properties 所有static或者public字段<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">pkProperty = pkColumns.length == <span class="number">1</span> ? lastPkProperty : <span class="keyword">null</span>;</span><br><span class="line">            statements = <span class="keyword">new</span> TableStatements(db, tablename, allColumns, pkColumns);</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (pkProperty != <span class="keyword">null</span>) &#123;</span><br><span class="line">                Class&lt;?&gt; type = pkProperty.type;</span><br><span class="line">                keyIsNumeric = type.equals(<span class="keyword">long</span>.class) || type.equals(Long.class) || type.equals(<span class="keyword">int</span>.class)</span><br><span class="line">                        || type.equals(Integer.class) || type.equals(<span class="keyword">short</span>.class) || type.equals(Short.class)</span><br><span class="line">                        || type.equals(<span class="keyword">byte</span>.class) || type.equals(Byte.class);</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                keyIsNumeric = <span class="keyword">false</span>;</span><br><span class="line">            &#125;</span><br></pre></td></tr></table></figure></p>
+<p>这里会获取所有的数据库字段，顺便判断表主键是否是数字类型</p>
+<h2 id="数据库加密"><a href="#数据库加密" class="headerlink" title="数据库加密"></a>数据库加密</h2><p>GreenDAO创建会话的时候我们一般会调用如下代码获取DaoSession对象：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">DevOpenHelper helper = <span class="keyword">new</span> DevOpenHelper(<span class="keyword">this</span>, ENCRYPTED ? <span class="string">"notes-db-encrypted"</span> : <span class="string">"notes-db"</span>);</span><br><span class="line">Database db = ENCRYPTED ? helper.getEncryptedWritableDb(<span class="string">"super-secret"</span>) : helper.getWritableDb();</span><br><span class="line">daoSession = <span class="keyword">new</span> DaoMaster(db).newSession();</span><br></pre></td></tr></table></figure></p>
+<p>在AbstractDAO类中，有一个db字段，最终的数据库操作以及事务的开启都会通过这个对象开启。GreenDAO中存在Database和DatabaseStatement2个接口<br>这2个接口分别存在2个子类StandardDatabase、EncryptedDatabase  和 StandardDatabaseStatement 、EncryptedDatabaseStatement，这几个类其实都是一个代理模式<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">StandardDatabaseStatement</span> <span class="keyword">implements</span> <span class="title">DatabaseStatement</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> SQLiteStatement delegate;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">StandardDatabaseStatement</span><span class="params">(SQLiteStatement delegate)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.delegate = delegate;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">execute</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        delegate.execute();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">EncryptedDatabase</span> <span class="keyword">implements</span> <span class="title">Database</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> SQLiteDatabase delegate;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">EncryptedDatabase</span><span class="params">(SQLiteDatabase delegate)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.delegate = delegate;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Cursor <span class="title">rawQuery</span><span class="params">(String sql, String[] selectionArgs)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> delegate.rawQuery(sql, selectionArgs);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里会发现GreenDAO调用了一个三方库叫做sqlcipher.，提供了Sqlite的数据库加密功能。所以GreenDAO在创建一次会话的时候可以指定数据库是否加密。如果没加密，会使用Android的Sqlite API去操作数据库，如果加密，则使用sqlcipher提供发API去操作数据库。</p>
+<h2 id="GreenDAO的增删改查"><a href="#GreenDAO的增删改查" class="headerlink" title="GreenDAO的增删改查"></a>GreenDAO的增删改查</h2><p>GreenDAO通过AbstractDAO类实现数据库的增删改查逻辑，此处分析几个常用的方法</p>
+<ul>
+<li><strong>insert 插入数据</strong><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">long</span> <span class="title">insert</span><span class="params">(T entity)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> executeInsert(entity, statements.getInsertStatement(), <span class="keyword">true</span>);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>内部逻辑伪代码:<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (db.isDbLockedByCurrentThread()) &#123;</span><br><span class="line">		<span class="comment">// 数据库连接被其他占用</span></span><br><span class="line">            rowId = insertInsideTx(entity, stmt);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="comment">// Do TX to acquire a connection before locking the stmt to avoid deadlocks (开启事务防止死锁)</span></span><br><span class="line">            db.beginTransaction();</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                rowId = insertInsideTx(entity, stmt);</span><br><span class="line">                db.setTransactionSuccessful();</span><br><span class="line">            &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">                db.endTransaction();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (setKeyAndAttach) &#123;</span><br><span class="line">            updateKeyAfterInsertAndAttach(entity, rowId, <span class="keyword">true</span>);</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure></p>
+<ul>
+<li>update 更新数据<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">update</span><span class="params">(T entity)</span></span></span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>update的源码大概为<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">assertSinglePk();  <span class="comment">//判断是否只有一个主键</span></span><br><span class="line">DatabaseStatement stmt = statements.getUpdateStatement();</span><br><span class="line"><span class="keyword">if</span> (db.isDbLockedByCurrentThread()) &#123;</span><br><span class="line">            <span class="keyword">synchronized</span> (stmt) &#123;</span><br><span class="line">                <span class="keyword">if</span> (isStandardSQLite) &#123;</span><br><span class="line">                    updateInsideSynchronized(entity, (SQLiteStatement) stmt.getRawStatement(), <span class="keyword">true</span>);</span><br><span class="line">                &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                    updateInsideSynchronized(entity, stmt, <span class="keyword">true</span>);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="comment">// Do TX to acquire a connection before locking the stmt to avoid deadlocks</span></span><br><span class="line">            db.beginTransaction();</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                <span class="keyword">synchronized</span> (stmt) &#123;</span><br><span class="line">                    updateInsideSynchronized(entity, stmt, <span class="keyword">true</span>);</span><br><span class="line">                &#125;</span><br><span class="line">                db.setTransactionSuccessful();</span><br><span class="line">            &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">                db.endTransaction();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure></p>
+<p>关注updateInsideSynchronized方法<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">bindValues(stmt, entity);</span><br><span class="line">        <span class="keyword">int</span> index = config.allColumns.length + <span class="number">1</span>;</span><br><span class="line">        K key = getKey(entity);</span><br><span class="line">        <span class="keyword">if</span> (key <span class="keyword">instanceof</span> Long) &#123;</span><br><span class="line">            stmt.bindLong(index, (Long) key);</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (key == <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> DaoException(<span class="string">"Cannot update entity without key - was it inserted before?"</span>);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            stmt.bindString(index, key.toString());</span><br><span class="line">        &#125;</span><br><span class="line">        stmt.execute();</span><br><span class="line">        attachEntity(key, entity, lock);</span><br></pre></td></tr></table></figure></p>
+<p>和insert方法类似，添加了主键判断必须存在key的逻辑<br>其中添加了<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> index = config.allColumns.length + <span class="number">1</span>;</span><br></pre></td></tr></table></figure></p>
+<p>这个index bind的字段是update的条件语句，和id进行绑定<br>换成sql语句就是<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">where id = '?'</span><br></pre></td></tr></table></figure></p>
+<ul>
+<li><strong>select 查询操作</strong><br>查询的代码和insert、update大致流程一致<br>会通过QueryBuilder构造查询条件，在QueryBuilder中list方法获取数据<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> List&lt;T&gt; <span class="title">list</span><span class="params">()</span> </span>&#123;</span><br><span class="line">	<span class="keyword">return</span> build().list();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> List&lt;T&gt; <span class="title">list</span><span class="params">()</span> </span>&#123;</span><br><span class="line">   checkThread();</span><br><span class="line">   Cursor cursor = dao.getDatabase().rawQuery(sql, parameters);</span><br><span class="line">   <span class="keyword">return</span> daoAccess.loadAllAndCloseCursor(cursor);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>会走到AbstractDao类的loadAllFromCursor方法<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (cursor.moveToFirst()) &#123;</span><br><span class="line">            <span class="keyword">if</span> (identityScope != <span class="keyword">null</span>) &#123;</span><br><span class="line">                identityScope.lock();</span><br><span class="line">                identityScope.reserveRoom(count);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                <span class="keyword">if</span> (!useFastCursor &amp;&amp; window != <span class="keyword">null</span> &amp;&amp; identityScope != <span class="keyword">null</span>) &#123;</span><br><span class="line">                    loadAllUnlockOnWindowBounds(cursor, window, list);</span><br><span class="line">                &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                    <span class="keyword">do</span> &#123;</span><br><span class="line">                        list.add(loadCurrent(cursor, <span class="number">0</span>, <span class="keyword">false</span>));</span><br><span class="line">                    &#125; <span class="keyword">while</span> (cursor.moveToNext());</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">                <span class="keyword">if</span> (identityScope != <span class="keyword">null</span>) &#123;</span><br><span class="line">                    identityScope.unlock();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure></p>
+<p>会走到loadCurrent方法<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">final</span> <span class="keyword">protected</span> T <span class="title">loadCurrent</span><span class="params">(Cursor cursor, <span class="keyword">int</span> offset, <span class="keyword">boolean</span> lock)</span></span></span><br></pre></td></tr></table></figure></p>
+<p>此处可以关于IdentityScope的代码<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">T entity = lock ? identityScopeLong.get2(key) : identityScopeLong.get2NoLock(key);</span><br><span class="line">            <span class="keyword">if</span> (entity != <span class="keyword">null</span>) &#123;</span><br><span class="line">                <span class="keyword">return</span> entity;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                entity = readEntity(cursor, offset);</span><br><span class="line">                attachEntity(entity);</span><br><span class="line">                <span class="keyword">if</span> (lock) &#123;</span><br><span class="line">                    identityScopeLong.put2(key, entity);</span><br><span class="line">                &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                    identityScopeLong.put2NoLock(key, entity);</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">return</span> entity;</span><br><span class="line">            &#125;</span><br></pre></td></tr></table></figure></p>
+<ul>
+<li><strong>delete 删除的逻辑和增改查大致一样</strong></li>
+</ul>
+<h2 id="GreenDAO缓存"><a href="#GreenDAO缓存" class="headerlink" title="GreenDAO缓存"></a>GreenDAO缓存</h2><p>在上面query的源码中可以发现GreenDAO对于数据做了一次内存的缓存，每次写数据库的时候会从IdentityScope的map 中put一次数据。每次读数据库的时候会从IdentityScope的map中get一次数据。如果map中缓存拿到了，就使用缓存作为查询的结果。</p>
+<p>在查询和更新数据的时候会执行<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">attachEntity(K key, T entity, <span class="keyword">boolean</span> lock)</span><br></pre></td></tr></table></figure></p>
+<p>方法，具体逻辑如下<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (identityScope != <span class="keyword">null</span> &amp;&amp; key != <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">if</span> (lock) &#123;</span><br><span class="line">                identityScope.put(key, entity);</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                identityScope.putNoLock(key, entity);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure></p>
+<p><code>关于数据库缓存的特性，我们需要视业务情况而定，在网上还是能搜到GreenDAO查询数据没有拿到最新结果的bug， 如果出现这个bug且需要拿到最新的数据库信息，可以使用DaoSession的clear方法删除缓存，源码如下</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//DaoSession</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">clear</span><span class="params">()</span> </span>&#123;</span><br><span class="line">   noteDaoConfig.clearIdentityScope();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//DaoConfig</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">clearIdentityScope</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        IdentityScope&lt;?, ?&gt; identityScope = <span class="keyword">this</span>.identityScope;</span><br><span class="line">        <span class="keyword">if</span>(identityScope != <span class="keyword">null</span>) &#123;</span><br><span class="line">            identityScope.clear();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<h2 id="GreenDAO的异步操作"><a href="#GreenDAO的异步操作" class="headerlink" title="GreenDAO的异步操作"></a>GreenDAO的异步操作</h2><p>有些时候，我们希望异步的操作数据库，GreenDAO给我们提供了异步的方法。<br>大致用法为：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">AsyncSession asyncSession = daoSession.startAsyncSession();</span><br><span class="line">asyncSession.setListener(<span class="keyword">new</span> AsyncOperationListener() &#123;</span><br><span class="line">   <span class="meta">@Override</span></span><br><span class="line">   <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onAsyncOperationCompleted</span><span class="params">(AsyncOperation operation)</span> </span>&#123;</span><br><span class="line">       AsyncOperation.OperationType type = operation.getType();</span><br><span class="line">       Log.e(TAG, type.name());</span><br><span class="line">   &#125;</span><br><span class="line">&#125;);</span><br><span class="line">asyncSession.insert(note);</span><br></pre></td></tr></table></figure></p>
+<p>我们获取一个AsyncSession对象进行异步的数据库操作，并且可以设置AsyncOperation对异步操作进行监听。但是为什么所有的异步操作是同一个Listener回调呢？我们可以在源码中找到答案。</p>
+<p>查看AsyncSession的insert方法</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> AsyncOperation <span class="title">insert</span><span class="params">(Object entity)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> insert(entity, <span class="number">0</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>最后可以走到enqueEntityOperation方法<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">AbstractDao&lt;?, ?&gt; dao = daoSession.getDao(entityClass);</span><br><span class="line">AsyncOperation operation = <span class="keyword">new</span> AsyncOperation(type, dao, <span class="keyword">null</span>, param, flags | sessionFlags);</span><br><span class="line">executor.enqueue(operation);</span><br><span class="line"><span class="keyword">return</span> operation;</span><br></pre></td></tr></table></figure></p>
+<p>可以发现有一个异步操作的Executor，AsyncOperationExecutor<br>查看enqueue方法</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">operation.sequenceNumber = ++lastSequenceNumber;</span><br><span class="line">queue.add(operation);</span><br><span class="line">countOperationsEnqueued++;</span><br><span class="line"><span class="keyword">if</span> (!executorRunning) &#123;</span><br><span class="line">   executorRunning = <span class="keyword">true</span>;</span><br><span class="line">   executorService.execute(<span class="keyword">this</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到它把异步加入到一个队列里面排队等待。在线程池中执行这些操作。</p>
+<p>查看run方法<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//线程池run方法代码</span></span><br><span class="line"><span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line">   AsyncOperation operation = queue.poll(<span class="number">1</span>, TimeUnit.SECONDS);</span><br><span class="line">   <span class="keyword">if</span> (operation == <span class="keyword">null</span>) &#123;</span><br><span class="line">      <span class="keyword">synchronized</span> (<span class="keyword">this</span>) &#123;</span><br><span class="line">	      <span class="comment">// Check again, this time in synchronized to be in sync with enqueue(AsyncOperation)</span></span><br><span class="line">	      operation = queue.poll();</span><br><span class="line">	      <span class="keyword">if</span> (operation == <span class="keyword">null</span>) &#123;</span><br><span class="line">	          <span class="comment">// set flag while still inside synchronized</span></span><br><span class="line">	          executorRunning = <span class="keyword">false</span>;</span><br><span class="line">	          <span class="keyword">return</span>;</span><br><span class="line">	       &#125;</span><br><span class="line">	    &#125;</span><br><span class="line">	&#125;</span><br><span class="line">    <span class="keyword">if</span> (operation.isMergeTx()) &#123;</span><br><span class="line">        <span class="comment">// Wait some ms for another operation to merge because a TX is expensive</span></span><br><span class="line">        AsyncOperation operation2 = queue.poll(waitForMergeMillis, TimeUnit.MILLISECONDS);</span><br><span class="line">        <span class="keyword">if</span> (operation2 != <span class="keyword">null</span>) &#123;</span><br><span class="line">             <span class="keyword">if</span> (operation.isMergeableWith(operation2)) &#123;</span><br><span class="line">                  mergeTxAndExecute(operation, operation2);</span><br><span class="line">              &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                   <span class="comment">// Cannot merge, execute both</span></span><br><span class="line">	             executeOperationAndPostCompleted(operation);</span><br><span class="line">                 executeOperationAndPostCompleted(operation2);</span><br><span class="line">              &#125;</span><br><span class="line">              <span class="keyword">continue</span>;</span><br><span class="line">         &#125;</span><br><span class="line">   &#125;</span><br><span class="line">   executeOperationAndPostCompleted(operation);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这段代码我们可以看到，每次从队列中拿一个异步操作对象执行逻辑。这也解释了为什么外层只需要set一个Listener。GreenDAO的异步操作是所有的数据库操作在一个子线程中进行同步操作。</p>
+<p>最终代码会走到executeOperation方法<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">switch</span> (operation.type) &#123;</span><br><span class="line">    <span class="keyword">case</span> Delete:</span><br><span class="line">        operation.dao.delete(operation.parameter);</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">default</span>:</span><br><span class="line">	    <span class="keyword">break</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这里会执行具体的DAO对象的数据库操作方法。</p>
+<h2 id="和ReactiveX的结合"><a href="#和ReactiveX的结合" class="headerlink" title="和ReactiveX的结合"></a>和ReactiveX的结合</h2><p>GreenDAO提供了API与rxjava结合使用，代码如下：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">RxDao&lt;xxEntity, Long&gt; xxDao = daoSession.getXXDao().rx();</span><br><span class="line">xxDao.insert(xxEntity)</span><br><span class="line">	.observerOn(AndroidSchedules.mainThread())</span><br><span class="line">	.subscribe(<span class="keyword">new</span> Action1&lt;xxEntity&gt;() &#123;</span><br><span class="line">		<span class="meta">@Override</span></span><br><span class="line">		<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">call</span><span class="params">(xxEntity entity)</span> </span>&#123;</span><br><span class="line">			<span class="comment">// insert success</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;)</span><br></pre></td></tr></table></figure></p>
+<p>我们来简单分析下源码看看RxJava是如何和GreenDAO结合的<br>查看AbstractDAO的rx()<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> RxDao&lt;T, K&gt; <span class="title">rx</span><span class="params">()</span> </span>&#123;</span><br><span class="line">	<span class="keyword">if</span> (rxDao == <span class="keyword">null</span>) &#123;</span><br><span class="line">	    rxDao = <span class="keyword">new</span> RxDao&lt;&gt;(<span class="keyword">this</span>, Schedulers.io());</span><br><span class="line">	&#125;</span><br><span class="line">    <span class="keyword">return</span> rxDao;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>查看RxDAO的构造方法</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">RxDao</span><span class="params">(AbstractDao&lt;T, K&gt; dao, Scheduler scheduler)</span> </span>&#123;</span><br><span class="line">	<span class="keyword">super</span>(scheduler);</span><br><span class="line">    <span class="keyword">this</span>.dao = dao;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>包含了Dao对象和线程调度Scheduler对象，这里是io线程，即在异步线程执行<br>查看insert方法</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> Observable&lt;T&gt; <span class="title">insert</span><span class="params">(<span class="keyword">final</span> T entity)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> wrap(<span class="keyword">new</span> Callable&lt;T&gt;() &#123;</span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">public</span> T <span class="title">call</span><span class="params">()</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">                dao.insert(entity);</span><br><span class="line">                <span class="keyword">return</span> entity;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>查看wrap方法， wrap方法里面也调用了一个重载的wrap方法。<br>参数为一个Callable对象，里面执行了数据库插入的逻辑，返回了实体类对象。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> &lt;R&gt; <span class="function">Observable&lt;R&gt; <span class="title">wrap</span><span class="params">(Callable&lt;R&gt; callable)</span> </span>&#123;</span><br><span class="line">	<span class="keyword">return</span> wrap(RxUtils.fromCallable(callable));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (scheduler != <span class="keyword">null</span>) &#123;</span><br><span class="line">	<span class="keyword">return</span> observable.subscribeOn(scheduler);</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> observable;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里的第二个wrap方法的参数observable是通过RxUtils.fromCallable获得的，查看这个方法的源码</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> &lt;T&gt; <span class="function">Observable&lt;T&gt; <span class="title">fromCallable</span><span class="params">(<span class="keyword">final</span> Callable&lt;T&gt; callable)</span> </span>&#123;</span><br><span class="line">	<span class="keyword">return</span> Observable.defer(<span class="keyword">new</span> Func0&lt;Observable&lt;T&gt;&gt;() &#123;</span><br><span class="line">		<span class="meta">@Override</span></span><br><span class="line">		<span class="function"><span class="keyword">public</span> Observable&lt;T&gt; <span class="title">call</span><span class="params">()</span> </span>&#123;</span><br><span class="line">			T result;</span><br><span class="line">			<span class="keyword">try</span> &#123;</span><br><span class="line">				result = callable.call();</span><br><span class="line">			&#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">				<span class="keyword">return</span> Observable.error(e);</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">return</span> Observable.just(result);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里使用了defer操作符创建一个Observable对象。延迟创建，确保Observable被订阅后才执行。</p>
+<p>以上就是rxjava和GreenDAO的结合使用的原理。和rx’java结合使用，会使GreenDAO尤其是异步操作写起来更加的优雅。</p>
+<h2 id="GreenDAO代码生成"><a href="#GreenDAO代码生成" class="headerlink" title="GreenDAO代码生成"></a>GreenDAO代码生成</h2><p>我们在GreenDAO使用的时候，会自动生成DaoMaster，DAO对象等等java文件。大致翻阅了DaoGenerator这个Module里面的代码。发现有模板引擎的库依赖：<br><figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">compile <span class="string">'org.freemarker:freemarker:2.3.23'</span></span><br></pre></td></tr></table></figure></p>
+<p>并且发现了freemarker的模板文件<br>在DaoGenerator/src-template里面，有很多的.ftl文件。GreenDAO的文件就是通过freemarker模板生成的Java文件。具体的原理下次分析后会单独再写一篇博客。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>通过对GreenDAO的源码分析，可以发现GreenDAO号称自己是性能最好的ORM库也是有原因的，GreenDAO的特点总结为以下：</p>
+<ul>
+<li>使用了静态代码生成，不通过反射运行时生成代理类，提升了性能</li>
+<li>使用了SQLiteStatement </li>
+<li>同时提供了同步和异步的数据库操作方式</li>
+<li>数据库提供内存缓存，更高效的查询</li>
+<li>基于sqlcipher提供加密数据库</li>
+<li>提供RxJava的API，异步操作更高效 </li>
+</ul>
+
+                <hr>
+                
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2018/04/17/handler/" data-toggle="tooltip" data-placement="top"
+                           title="深入理解Android消息机制">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/2018/01/12/weviewinit/" data-toggle="tooltip" data-placement="top"
+                           title="WebView深究之Android是如何实现webview初始化的">Next Post &rarr;</a>
+                    </li>
+                    
+                </ul>
+
+                
+
+                
+
+
+                <!--加入新的评论系统-->
+                
+                <!-- 来必力City版安装代码 -->
+                <div id="lv-container" data-id="city" data-uid="MTAyMC8zNTgzMS8xMjM2Nw">
+                    <script type="text/javascript">
+                        (function(d, s) {
+                            var j, e = d.getElementsByTagName(s)[0];
+
+                            if (typeof LivereTower === 'function') { return; }
+
+                            j = d.createElement(s);
+                            j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+                            j.async = true;
+
+                            e.parentNode.insertBefore(j, e);
+                        })(document, 'script');
+                    </script>
+                    <noscript> 为正常使用来必力评论功能请激活JavaScript</noscript>
+                </div>
+                <!-- City版安装代码已完成 -->
+                
+            </div>
+
+            <div class="hidden-xs col-sm-3 toc-col">
+                <div class="toc-wrap">
+                    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#简述"><span class="toc-text">简述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#数据库加密"><span class="toc-text">数据库加密</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#GreenDAO的增删改查"><span class="toc-text">GreenDAO的增删改查</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#GreenDAO缓存"><span class="toc-text">GreenDAO缓存</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#GreenDAO的异步操作"><span class="toc-text">GreenDAO的异步操作</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#和ReactiveX的结合"><span class="toc-text">和ReactiveX的结合</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#GreenDAO代码生成"><span class="toc-text">GreenDAO代码生成</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-text">总结</span></a></li></ol>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Sidebar Container -->
+
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+
+                <!-- Friends Blog -->
+                
+                <div style="margin-top: 20px;">
+                    <h5 class="text-center">友链</h5>
+                    <ul class="list-inline text-center">
+                        
+                        <li><a href="http://liangfei.me/">梁飞</a></li>
+                        
+                        <li><a href="https://geminiwen.com/">温省长</a></li>
+                        
+                    </ul>
+                </div>
+                
+            </div>
+        </div>
+
+    </div>
+</article>
+
+
+
+
+
+
+
+<!-- Footer -->
+<!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 text-center">
+                <br>
+                <ul class="list-inline text-center">
+                
+                
+                
+
+                
+
+                
+
+                
+                    <li>
+                        <a target="_blank"  href="https://github.com/shaomaicheng">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                
+
+                
+
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; 烧麦 2018
+                    <br>
+                    <!-- <span id="busuanzi_container_site_pv" style="font-size: 12px;">PV: <span id="busuanzi_value_site_pv"></span> Times</span>
+                    <br>
+                    Theme by <a href="https://haojen.github.io/">Haojen Ma</a> -->
+                </p>
+
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js"></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js"></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/blog.js"></script>
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("http://shaomaicheng.github.io/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("//cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+<!-- Google Analytics -->
+
+
+
+<!-- Baidu Tongji -->
+
+
+<!-- swiftype -->
+<script type="text/javascript">
+  (function(w,d,t,u,n,s,e){w['SwiftypeObject']=n;w[n]=w[n]||function(){
+  (w[n].q=w[n].q||[]).push(arguments);};s=d.createElement(t);
+  e=d.getElementsByTagName(t)[0];s.async=1;s.src=u;e.parentNode.insertBefore(s,e);
+  })(window,document,'script','//s.swiftypecdn.com/install/v2/st.js','_st');
+
+  _st('install','','2.0.0');
+</script>
+
+<script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<!--wechat title img-->
+<img class="wechat-title-img" src="https://oe9nbfytu.qnssl.com/subject%2F6c138472714d41aba7d219fc5a896940">
+</body>
+
+</html>

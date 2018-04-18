@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Head tag -->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Android搬砖工">
+    <meta name="keyword" content="">
+    <meta name="theme-color" content="#600090">
+    <meta name="msapplication-navbutton-color" content="#600090">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="#600090">
+    <link rel="shortcut icon" href="https://cdn4.iconfinder.com/data/icons/ionicons/512/icon-person-128.png">
+    <link rel="alternate" type="application/atom+xml" title="烧麦" href="/atom.xml">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css">
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.css">
+    <title>
+        
+        WebView深究之Android是如何实现webview初始化的｜undefined
+        
+    </title>
+
+    <link rel="canonical" href="http://shaomaicheng.github.io/2018/01/12/weviewinit/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/blog-style.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+</head>
+
+<style>
+
+    header.intro-header {
+        background-image: url('')
+    }
+</style>
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="" class="animated fadeIn">
+<!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top " id="nav-top" data-ispost = "true" data-istags="false
+" data-ishome = "false" >
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand animated pulse" href="/">
+                <span class="brand-logo">
+                    烧麦
+                </span>
+                's Blog
+            </a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <!-- /.navbar-collapse -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+					
+                    
+					
+					
+                </ul>
+            </div>
+        </div>
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+//    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+<!-- Main Content -->
+
+<!--only post-->
+
+
+<img class="wechat-title-img"
+     src="">
+
+
+<style>
+    
+    header.intro-header {
+        background-image: url('')
+    }
+
+    
+</style>
+
+<header class="intro-header">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 text-center">
+                <div class="post-heading">
+                    <h1>WebView深究之Android是如何实现webview初始化的</h1>
+                    
+                    <span class="meta">
+                         作者 烧麦
+                        <span>
+                          日期 2018-01-12
+                         </span>
+                    </span>
+                    <div class="tags text-center">
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="post-title-haojen">
+        <span>
+            WebView深究之Android是如何实现webview初始化的
+        </span>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+            <!-- Post Container -->
+            <div class="col-lg-8 col-lg-offset-1 col-sm-9 post-container">
+                <h3 id="webview初始化"><a href="#webview初始化" class="headerlink" title="webview初始化"></a>webview初始化</h3><p>关注Android加载webview内核的过程。我们从WebView的init过程中切入。<br>WebView的构造方法,最终都会调用<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">WebView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes,</span><br><span class="line">            Map&lt;String, Object&gt; javaScriptInterfaces, boolean privateBrowsing)</span><br></pre></td></tr></table></figure></p>
+<p>这个方法，这个方法做了如下几个事情：</p>
+<ol>
+<li>线程检查</li>
+<li>Provider类的选择</li>
+<li>Provider类的初始化</li>
+<li>Cookie相关的处理</li>
+</ol>
+<p>线程检查是为了保证WebView在同一个线程中进行创建，暂时不深究。把主要的经历放在Provider相关的逻辑。</p>
+<p>mProvider是WebView中一个成员变量，类型是WebViewProvider.实际上，我们可以发现WebView所有的逻辑处理都是通过WebViewProvider来实现的，例如：</p>
+<p>load(String url)方法的源码实现是<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">loadUrl</span><span class="params">(String url, Map&lt;String, String&gt; additionalHttpHeaders)</span> </span>&#123;</span><br><span class="line">        checkThread();</span><br><span class="line">        mProvider.loadUrl(url, additionalHttpHeaders);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>WebViewProvider实际是一个interface<br>进入源码，他包括了大部分WebView中的同名方法。包括loadUrl,reload,goBack等。所以他是WebView的真正能力提供者。</p>
+<p>查看源码ensureProviderCreated()方法<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mProvider = getFactory().createWebView(<span class="keyword">this</span>, <span class="keyword">new</span> PrivateAccess());</span><br></pre></td></tr></table></figure></p>
+<p>getFactory的具体实现是<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">synchronized</span> WebViewFactoryProvider <span class="title">getFactory</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> WebViewFactory.getProvider();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这一步是为了确定WebViewProvider的子类,Provider的构造根据WebViewFactory类确定。Android在5.0后将webview内核从webkit换成了chromium，这里使用工厂模式可以将内核实现反射和上层初始化的代码解耦</p>
+<p>我们选取getProvider()方法中的核心逻辑进行分析</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">    Class&lt;WebViewFactoryProvider&gt; providerClass = getProviderClass();</span><br><span class="line"></span><br><span class="line">    Trace.traceBegin(Trace.TRACE_TAG_WEBVIEW, <span class="string">"providerClass.newInstance()"</span>);</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            sProviderInstance = providerClass.getConstructor(WebViewDelegate.class)</span><br><span class="line">            .newInstance(<span class="keyword">new</span> WebViewDelegate());</span><br><span class="line">            <span class="keyword">return</span> sProviderInstance;</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">        &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">        &#125;</span><br><span class="line">    <span class="keyword">finally</span> &#123;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>有些版本的实现为<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">    Class&lt;WebViewFactoryProvider&gt; providerClass = getProviderClass();</span><br><span class="line">    Method staticFactory = <span class="keyword">null</span>;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        staticFactory = providerClass.getMethod(CHROMIUM_WEBVIEW_FACTORY_METHOD, WebViewDelegate.class);</span><br><span class="line">    &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        sProviderInstance = (WebViewFactoryProvider)staticFactory.invoke(<span class="keyword">null</span>, <span class="keyword">new</span> WebViewDelegate());</span><br><span class="line">        <span class="keyword">return</span> sProviderInstance;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">&#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这里在获取了实际的FactoryProvider class之后，利用反射，创建了真实的FactoryProvider对象</p>
+<p>那么到底是如何确认应该获取那个FactoryProvider对象呢<br>继续看getProviderClass()方法的代码：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">Context webViewContext = <span class="keyword">null</span>;</span><br><span class="line">Application initialApplication = AppGlobals.getInitialApplication();</span><br><span class="line"></span><br><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        webViewContext = getWebViewContextAndSetProvider();</span><br><span class="line">    &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">        Trace.traceEnd(Trace.TRACE_TAG_WEBVIEW);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    </span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        ClassLoader clazzLoader = webViewContext.getClassLoader();</span><br><span class="line"></span><br><span class="line">        loadNativeLibrary(clazzLoader);</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> (Class&lt;WebViewFactoryProvider&gt;) Class.forName(CHROMIUM_WEBVIEW_FACTORY,<span class="keyword">true</span>, clazzLoader);</span><br><span class="line">        &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">    &#125; <span class="keyword">catch</span> () &#123;</span><br><span class="line">        </span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125; <span class="keyword">catch</span> (MissingWebViewPackageException e) &#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> (Class&lt;WebViewFactoryProvider&gt;) Class.forName(NULL_WEBVIEW_FACTORY);</span><br><span class="line">    &#125; <span class="keyword">catch</span> (ClassNotFoundException e2) &#123;</span><br><span class="line">        <span class="comment">// Ignore.</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>可以看到<br>Provider类型结果分为两种</p>
+<ul>
+<li>CHROMIUM_WEBVIEW_FACTORY com.android.webview.chromium.WebViewChromiumFactoryProvider</li>
+<li>NULL_WEBVIEW_FACTORY  com.android.webview.nullwebview.NullWebViewFactoryProvider</li>
+</ul>
+<p>正常的加载结果大致分为2步</p>
+<ol>
+<li>确定webview的PackageInfo和Context</li>
+<li>根据此结果load library</li>
+</ol>
+<p>分析第一步，我们查看方法getWebViewContextAndSetProvider()</p>
+<p>里面的核心逻辑为<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">WebViewProviderResponse response = <span class="keyword">null</span>;</span><br><span class="line">response = getUpdateService().waitForAndGetProvider();</span><br><span class="line">PackageInfo newPackageInfo = <span class="keyword">null</span>;</span><br><span class="line"></span><br><span class="line">newPackageInfo = initialApplication.getPackageManager().getPackageInfo(</span><br><span class="line">                    response.packageInfo.packageName,</span><br><span class="line">                    PackageManager.GET_SHARED_LIBRARY_FILES</span><br><span class="line">                    | PackageManager.MATCH_DEBUG_TRIAGED_MISSING</span><br><span class="line">                    <span class="comment">// Make sure that we fetch the current provider even if its not</span></span><br><span class="line">                    <span class="comment">// installed for the current user</span></span><br><span class="line">                    | PackageManager.MATCH_UNINSTALLED_PACKAGES</span><br><span class="line">                    <span class="comment">// Fetch signatures for verification</span></span><br><span class="line">                    | PackageManager.GET_SIGNATURES</span><br><span class="line">                    <span class="comment">// Get meta-data for meta data flag verification</span></span><br><span class="line">                    | PackageManager.GET_META_DATA);</span><br><span class="line">                    </span><br><span class="line">                    </span><br><span class="line">verifyPackageInfo(response.packageInfo, newPackageInfo);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">Context webViewContext = initialApplication.createApplicationContext(</span><br><span class="line">                        newPackageInfo.applicationInfo,</span><br><span class="line">                        Context.CONTEXT_INCLUDE_CODE | Context.CONTEXT_IGNORE_SECURITY);</span><br><span class="line">sPackageInfo = newPackageInfo;</span><br><span class="line"><span class="keyword">return</span> webViewContext;</span><br></pre></td></tr></table></figure></p>
+<p>我们重点追踪waitForAndGetProvider()这个方法。这个方法会调用<br> WebViewUpdateServiceImpl类的waitForAndGetProvider()方法，继而调用WebViewUpdate的waitForAndGetProvider()</p>
+<p> waitForAndGetProvider()中会根据mCurrentWebViewPackage创建WebViewProviderResponse对象</p>
+<p>在onWebViewProviderChanged()中，我们获取到了Package对象。在findPreferredWebViewPackage()方法中，我们会获取到最新的package对象</p>
+<p>findPreferredWebViewPackage()的核心逻辑为<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">String userChosenProvider = mSystemInterface.getUserChosenWebViewProvider(mContext);</span><br></pre></td></tr></table></figure></p>
+<p>如果用户已经选择了WebView，那么使用用户选择的<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (ProviderAndPackageInfo providerAndPackage : providers) &#123;</span><br><span class="line">    <span class="keyword">if</span> (providerAndPackage.provider.packageName.equals(userChosenProvider)) &#123;</span><br><span class="line">    <span class="comment">// userPackages can contain null objects.</span></span><br><span class="line">    List&lt;UserPackage&gt; userPackages =</span><br><span class="line">    mSystemInterface.getPackageInfoForProviderAllUsers(mContext,providerAndPackage.provider);</span><br><span class="line">        <span class="keyword">if</span> (isInstalledAndEnabledForAllUsers(userPackages)) &#123;</span><br><span class="line">            <span class="keyword">return</span> providerAndPackage.packageInfo;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>如果选择失败或者没有选择，就使用最稳定的<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (ProviderAndPackageInfo providerAndPackage : providers) &#123;</span><br><span class="line">    <span class="keyword">if</span> (providerAndPackage.provider.availableByDefault) &#123;</span><br><span class="line">        <span class="comment">// userPackages can contain null objects.</span></span><br><span class="line">        List&lt;UserPackage&gt; userPackages =</span><br><span class="line">        mSystemInterface.getPackageInfoForProviderAllUsers(mContext,providerAndPackage.provider);</span><br><span class="line">        <span class="keyword">if</span> (isInstalledAndEnabledForAllUsers(userPackages)) &#123;</span><br><span class="line">            <span class="keyword">return</span> providerAndPackage.packageInfo;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>那么Android是如何获取所有的package呢？<br>在com.android.server.webkit.SystemImpl中有答案，<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">parser = AppGlobals.getInitialApplication().getResources().getXml(</span><br><span class="line">                    com.android.internal.R.xml.config_webview_packages);</span><br></pre></td></tr></table></figure></p>
+<p>在SystemImpl中调用了如下逻辑。原来，webview相关的package信息是存放在一个xml文件里面的。</p>
+<p>config_webview_packages.xml的内容如下：<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">webviewproviders</span>&gt;</span></span><br><span class="line">    <span class="comment">&lt;!-- The default WebView implementation --&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">webviewprovider</span> <span class="attr">description</span>=<span class="string">"Android WebView"</span> <span class="attr">packageName</span>=<span class="string">"com.android.webview"</span> /&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">webviewproviders</span>&gt;</span></span><br></pre></td></tr></table></figure></p>
+<p>由此可见，Android默认的system webview的package name就是com.android.webview，在Android 7.0后，用户可以在settings里面选择webview实现。如果用户手机安装了Chrome android app，那么可以将webview实现选择为chrome</p>
+<p>这里我们就跟踪完了第一步获取WebView的Context和Provider。这里会返回Context。</p>
+<p>接下来分析第二步骤，真正的加载webview的chromium动态库</p>
+<p>loadNativeLibrary方法的核心逻辑如下<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">String[] args = getWebViewNativeLibraryPaths(sPackageInfo);</span><br><span class="line"><span class="keyword">int</span> result = nativeLoadWithRelroFile(args[<span class="number">0</span>] <span class="comment">/* path32 */</span>,</span><br><span class="line">                                             args[<span class="number">1</span>] <span class="comment">/* path64 */</span>,</span><br><span class="line">                                             CHROMIUM_WEBVIEW_NATIVE_RELRO_32,</span><br><span class="line">                                             CHROMIUM_WEBVIEW_NATIVE_RELRO_64,</span><br><span class="line">                                             clazzLoader);</span><br><span class="line"><span class="keyword">return</span> result;</span><br></pre></td></tr></table></figure></p>
+<p>走到getWebViewNativeLibraryPaths，这个是获取webview动态库的path，分别还对32位和64位系统进行了处理。而这个动态库的形式，是一个APK文件。<br>在getLoadFromApkPath方法中有如下调用<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> (ZipFile z = <span class="keyword">new</span> ZipFile(apkPath)) &#123;</span><br><span class="line">    <span class="keyword">for</span> (String abi : abiList) &#123;</span><br><span class="line">        <span class="keyword">final</span> String entry = <span class="string">"lib/"</span> + abi + <span class="string">"/"</span> + nativeLibFileName;</span><br><span class="line">        ZipEntry e = z.getEntry(entry);</span><br><span class="line">        <span class="keyword">if</span> (e != <span class="keyword">null</span> &amp;&amp; e.getMethod() == ZipEntry.STORED) &#123;</span><br><span class="line">            <span class="comment">// Return a path formatted for dlopen() load from APK.</span></span><br><span class="line">            <span class="keyword">return</span> apkPath + <span class="string">"!/"</span> + entry;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> MissingWebViewPackageException(e);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>loadWithRelroFile方法则调用了一个jni方法<br>nativeLoadWithRelroFile()</p>
+<p>我们可以找到源码framework/base/native/webview里面找到loader.cpp<br>里面有jint LoadWithRelroFile(JNIEnv<em> env, jclass, jstring lib, jstring relro32,<br>                       jstring relro64, jobject clazzLoader)方法，这个方法调用了jint DoLoadWithRelroFile(JNIEnv</em> env, const char<em> lib, const char</em> relro,<br>                         jobject clazzLoader)方法，这个方法的内部逻辑如下</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> relro_fd = TEMP_FAILURE_RETRY(open(relro, O_RDONLY));</span><br><span class="line"><span class="keyword">android_namespace_t</span>* ns =</span><br><span class="line">      android::FindNamespaceByClassLoader(env, clazzLoader);</span><br><span class="line">  android_dlextinfo extinfo;</span><br><span class="line">  extinfo.flags = ANDROID_DLEXT_RESERVED_ADDRESS | ANDROID_DLEXT_USE_RELRO |</span><br><span class="line">                  ANDROID_DLEXT_USE_NAMESPACE;</span><br><span class="line">  extinfo.reserved_addr = gReservedAddress;</span><br><span class="line">  extinfo.reserved_size = gReservedSize;</span><br><span class="line">  extinfo.relro_fd = relro_fd;</span><br><span class="line">  extinfo.library_namespace = ns;</span><br><span class="line">  <span class="keyword">void</span>* handle = android_dlopen_ext(lib, RTLD_NOW, &amp;extinfo);</span><br><span class="line">  close(relro_fd);</span><br><span class="line">  <span class="keyword">return</span> LIBLOAD_SUCCESS;</span><br></pre></td></tr></table></figure>
+<p>这部分cpp代码不是很熟，参考了网上的解释<br>“<br>函数DoLoadWithRelroFile会将告诉函数android_dlopen_ext在加载Chromium动态库的时候，将参数relro描述的Chromium GNU_RELRO Section文件内存映射到内存来，并且代替掉已经加载的Chromium动态库的GNU_RELRO Section。这是通过将指定一个ANDROID_DLEXT_USE_RELRO标志实现的。</p>
+<p>之所以可以这样做，是因为参数relro描述的Chromium GNU_RELRO Section文件对应的Chromium动态库的加载地址与当前App进程加载的Chromium动态库的地址一致。只要两个相同的动态库在两个不同的进程中的加载地址一致，它们的链接和重定位信息就是完全一致的，因此就可以通过文件内存映射的方式进行共享。共享之后，就可以达到节省内存的目的了<br>“</p>
+<p>这里就完成了Chromium动态库的加载。</p>
+<p>回到webview初始化的地方，继续会调用WebViewFactoryProvider的createWebView方法,如果加载的chromium，那么这个接口的实现类是WebViewChromiumFactoryProvider，它在createWebView中会返回一个WebViewChromium对象<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">WebViewChromium wvc = <span class="keyword">new</span> WebViewChromium(<span class="keyword">this</span>, webView, privateAccess);</span><br><span class="line"></span><br><span class="line"><span class="keyword">synchronized</span> (mLock) &#123;</span><br><span class="line">    <span class="keyword">if</span> (mWebViewsToStart != <span class="keyword">null</span>) &#123;</span><br><span class="line">        mWebViewsToStart.add(<span class="keyword">new</span> WeakReference&lt;WebViewChromium&gt;(wvc));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">return</span> wvc;</span><br></pre></td></tr></table></figure></p>
+<p>我们实际的Provider类为WebViewChromium,接下来会调用WebViewChromium的init方法，这里会初始化真正的WebView引擎，包括渲染等模块的加载</p>
+<p>WebView的初始化过程就分析到这里。后面会继续分析Provider的工作流程，以及WebView是如何加载动态库的细节~</p>
+<p>参考文章地址：<a href="http://blog.csdn.net/luoshengyang/article/details/53209199" target="_blank" rel="noopener">http://blog.csdn.net/luoshengyang/article/details/53209199</a></p>
+
+                <hr>
+                
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2018/04/04/greendao/" data-toggle="tooltip" data-placement="top"
+                           title="Greendao源码分析">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/2017/04/10/retrofit/" data-toggle="tooltip" data-placement="top"
+                           title="retrofit源码解析">Next Post &rarr;</a>
+                    </li>
+                    
+                </ul>
+
+                
+
+                
+
+
+                <!--加入新的评论系统-->
+                
+                <!-- 来必力City版安装代码 -->
+                <div id="lv-container" data-id="city" data-uid="MTAyMC8zNTgzMS8xMjM2Nw">
+                    <script type="text/javascript">
+                        (function(d, s) {
+                            var j, e = d.getElementsByTagName(s)[0];
+
+                            if (typeof LivereTower === 'function') { return; }
+
+                            j = d.createElement(s);
+                            j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+                            j.async = true;
+
+                            e.parentNode.insertBefore(j, e);
+                        })(document, 'script');
+                    </script>
+                    <noscript> 为正常使用来必力评论功能请激活JavaScript</noscript>
+                </div>
+                <!-- City版安装代码已完成 -->
+                
+            </div>
+
+            <div class="hidden-xs col-sm-3 toc-col">
+                <div class="toc-wrap">
+                    <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#webview初始化"><span class="toc-text">webview初始化</span></a></li></ol>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Sidebar Container -->
+
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+
+                <!-- Friends Blog -->
+                
+                <div style="margin-top: 20px;">
+                    <h5 class="text-center">友链</h5>
+                    <ul class="list-inline text-center">
+                        
+                        <li><a href="http://liangfei.me/">梁飞</a></li>
+                        
+                        <li><a href="https://geminiwen.com/">温省长</a></li>
+                        
+                    </ul>
+                </div>
+                
+            </div>
+        </div>
+
+    </div>
+</article>
+
+
+
+
+
+
+
+<!-- Footer -->
+<!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 text-center">
+                <br>
+                <ul class="list-inline text-center">
+                
+                
+                
+
+                
+
+                
+
+                
+                    <li>
+                        <a target="_blank"  href="https://github.com/shaomaicheng">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                
+
+                
+
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; 烧麦 2018
+                    <br>
+                    <!-- <span id="busuanzi_container_site_pv" style="font-size: 12px;">PV: <span id="busuanzi_value_site_pv"></span> Times</span>
+                    <br>
+                    Theme by <a href="https://haojen.github.io/">Haojen Ma</a> -->
+                </p>
+
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js"></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js"></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/blog.js"></script>
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("http://shaomaicheng.github.io/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("//cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+<!-- Google Analytics -->
+
+
+
+<!-- Baidu Tongji -->
+
+
+<!-- swiftype -->
+<script type="text/javascript">
+  (function(w,d,t,u,n,s,e){w['SwiftypeObject']=n;w[n]=w[n]||function(){
+  (w[n].q=w[n].q||[]).push(arguments);};s=d.createElement(t);
+  e=d.getElementsByTagName(t)[0];s.async=1;s.src=u;e.parentNode.insertBefore(s,e);
+  })(window,document,'script','//s.swiftypecdn.com/install/v2/st.js','_st');
+
+  _st('install','','2.0.0');
+</script>
+
+<script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<!--wechat title img-->
+<img class="wechat-title-img" src="https://oe9nbfytu.qnssl.com/subject%2F6c138472714d41aba7d219fc5a896940">
+</body>
+
+</html>
