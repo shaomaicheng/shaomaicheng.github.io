@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Head tag -->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Android搬砖工">
+    <meta name="keyword" content="">
+    <meta name="theme-color" content="#600090">
+    <meta name="msapplication-navbutton-color" content="#600090">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="#600090">
+    <link rel="shortcut icon" href="https://cdn4.iconfinder.com/data/icons/ionicons/512/icon-person-128.png">
+    <link rel="alternate" type="application/atom+xml" title="烧麦" href="/atom.xml">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css">
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.css">
+    <title>
+        
+        单例模式学习总结｜undefined
+        
+    </title>
+
+    <link rel="canonical" href="http://shaomaicheng.github.io/2016/09/07/signle/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/blog-style.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+</head>
+
+<style>
+
+    header.intro-header {
+        background-image: url('')
+    }
+</style>
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="" class="animated fadeIn">
+<!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top " id="nav-top" data-ispost = "true" data-istags="false
+" data-ishome = "false" >
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand animated pulse" href="/">
+                <span class="brand-logo">
+                    烧麦
+                </span>
+                's Blog
+            </a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <!-- /.navbar-collapse -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+					
+                    
+					
+					
+                </ul>
+            </div>
+        </div>
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+//    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+<!-- Main Content -->
+
+<!--only post-->
+
+
+<img class="wechat-title-img"
+     src="">
+
+
+<style>
+    
+    header.intro-header {
+        background-image: url('')
+    }
+
+    
+</style>
+
+<header class="intro-header">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 text-center">
+                <div class="post-heading">
+                    <h1>单例模式学习总结</h1>
+                    
+                    <span class="meta">
+                         作者 烧麦
+                        <span>
+                          日期 2016-09-07
+                         </span>
+                    </span>
+                    <div class="tags text-center">
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="post-title-haojen">
+        <span>
+            单例模式学习总结
+        </span>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+            <!-- Post Container -->
+            <div class="col-lg-8 col-lg-offset-1 col-sm-9 post-container">
+                <p>今天温习了Singleton模式，仔细把2本书上的相关内容研究了一遍，现在做一下总结</p>
+<h3 id="1-懒汉单例模式"><a href="#1-懒汉单例模式" class="headerlink" title="1. 懒汉单例模式"></a>1. 懒汉单例模式</h3><p>懒汉单例模式是声明一个static变量，在用户第一次调用getInstance时进行初始化。示例代码如下<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">public class Singleton &#123;</span><br><span class="line"></span><br><span class="line">    private static Singleton mInstance;</span><br><span class="line"></span><br><span class="line">    private Singleton() &#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public synchronized static Singleton getInstance() &#123;</span><br><span class="line">        if (mInstance == null) &#123;</span><br><span class="line">            mInstance = new Singleton();</span><br><span class="line">        &#125;</span><br><span class="line">        return mInstance;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p><strong><em>懒汉单例模式总结</em></strong><br><strong>优点：</strong> 只有在使用的时候才进行实例化，在一定程度上节约资源。<br><strong>缺点：</strong> 即使mInstance不为null都需要每次进行线程同步，造成不必要的同步开销。</p>
+<h3 id="2-DCL单例模式（Double-CheckLock）"><a href="#2-DCL单例模式（Double-CheckLock）" class="headerlink" title="2. DCL单例模式（Double CheckLock）"></a>2. DCL单例模式（Double CheckLock）</h3><p>DCL单例模式是进行2次非空检查，第一次检查，如果mInstance非空，则不用进行同步，避免了不必要的同步开销。第二次检查，则是类似懒汉模式的在非空状态下才进行实例化。<br>DCL模式示例代码如下<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">public class Singleton &#123;</span><br><span class="line">	private static Singleton mInsatnce = null;</span><br><span class="line"></span><br><span class="line">    private Singleton() &#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static Singleton getInsatnce() &#123;</span><br><span class="line">        if (mInsatnce == null) &#123;</span><br><span class="line">            synchronized (Singleton.class) &#123;</span><br><span class="line">                if (mInsatnce == null) &#123;</span><br><span class="line">                    mInsatnce = new Singleton();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        return mInsatnce;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p><strong><em>DCL单例模式总结</em></strong><br><strong>优点：</strong> 第一次执行getInstance的时候单例对象才会被实例化，并且避免了不必要的同步开销，资源利用率很高。<br><strong>缺点：</strong> 第一加载的时候比较慢，可能会失败。失败的原因源自java内存模型，假设线程A执行到mInsatnce = new Singleton()的时候，jvm会做3件事</p>
+<ol>
+<li>给对象实例分配内存</li>
+<li>调用对象构造函数，初始化成员字段</li>
+<li>将mInstance指向分配的内存空间，此时mInstance已经不是null<br>但是在jdk1.5之前，java编译器允许乱序执行。所以最终的步骤既可能是1-&gt;2-&gt;3，也可能是1-&gt;3-&gt;2。如果是后者，那么A执行完3执行2之前，切换到B线程上，第3步骤已经完成，线程直接取出mInstance对象，但是因为第2步骤没有完成，B线程使用的时候会直接出错，这个就是DCL失效。</li>
+</ol>
+<h3 id="3-最常用的单例模式"><a href="#3-最常用的单例模式" class="headerlink" title="3. 最常用的单例模式"></a>3. 最常用的单例模式</h3><p>示例代码如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">public class Singleton &#123;</span><br><span class="line">	private Singleton() &#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static Singleton getInstance() &#123;</span><br><span class="line">        return SingletonViewHolder.mInsatnce;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private static class SingletonHolder &#123;</span><br><span class="line">        private static final Singleton mInsatnce = new Singleton();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p><strong><em>常用单例模式总结</em></strong><br>此种写法在第一次加载Singleton类的时候不会初始化mInsatnce，只有在第一次调用getInsatnce方法的时候，JVM才会去加载SingletonHolder类，此种方法可以保证线程安全性和单例对象的唯一性。所以是最推荐使用的单例模式写法。</p>
+<h3 id="4-枚举单例"><a href="#4-枚举单例" class="headerlink" title="4. 枚举单例"></a>4. 枚举单例</h3><p>在java中，也可以利用枚举实现单例模式<br>示例代码如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">public enum SingletonEnum &#123;</span><br><span class="line">	INSTANCE;</span><br><span class="line">	public void doSth() &#123;</span><br><span class="line">		//do something in this method</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p><strong><em>枚举单例总结</em></strong><br><strong>优点：</strong> 线程安全，代码简单，任何情况下都能保证对象的单例</p>
+<p><strong><em>说明</em></strong><br>上述单例实现方法（枚举除外），都有对象反序列化之后会重新创建对象实例的问题，若需要解决此问题，需要添加一个方法<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">private Object readResolve() throws ObjectStreamException &#123;</span><br><span class="line">	return mInstance;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>在此方法中，将反序列化时默认返回新建一个对象强制改为返回原有的mInstance对象。</p>
+<h3 id="5-使用容器实现单例模式"><a href="#5-使用容器实现单例模式" class="headerlink" title="5. 使用容器实现单例模式"></a>5. 使用容器实现单例模式</h3><p>代码示例：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">public class SingletonManager &#123;</span><br><span class="line">    private static HashMap&lt;String, Object&gt; map = new HashMap&lt;&gt;();</span><br><span class="line"></span><br><span class="line">    public static void registerService(String key, Object instance) &#123;</span><br><span class="line">        if (!map.containsKey(key)) &#123;</span><br><span class="line">            map.put(key, instance);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static Object getService(String key) &#123;</span><br><span class="line">        return map.get(key);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p><strong><em>单例容器总结</em></strong><br>使用容器对单例对象进行统一管理，对用户隐藏了具体实现，降低了耦合度。在Android中，Context.getSystemService()也就是一种单例容器的使用案例。</p>
+<p>#<em>单例模式总结</em><br><strong>优点</strong></p>
+<ol>
+<li>只存在一个实例对象，减少了内存开支</li>
+<li>避免对文件等资源的多重占用</li>
+<li>可以利用单例模式设置全局变量，用来进行共享资源的访问</li>
+</ol>
+<p><strong>缺点</strong></p>
+<ol>
+<li>一般没有接口，扩展困难</li>
+<li>在Android中，如果单例模式持有Context的引用，很容易引发内存泄漏。所以在单例中推荐使用ApplicationContext。</li>
+</ol>
+<p>综上述<br>个人认为在简单需求下，问题最少，代码最简单，用起来最为简便的仍然是枚举单例，但枚举单例。但是在复杂的需求的时候，enum仍然很难满足需求。</p>
+<p><strong>参考书籍</strong></p>
+<ol>
+<li>《Effective Java》</li>
+<li>《Android源码设计模式解析与实战》</li>
+</ol>
+
+                <hr>
+                
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2017/02/23/kotlininit/" data-toggle="tooltip" data-placement="top"
+                           title="初探Kotlin和anko进行Android开发">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                </ul>
+
+                
+
+                
+
+
+                <!--加入新的评论系统-->
+                
+                <!-- 来必力City版安装代码 -->
+                <div id="lv-container" data-id="city" data-uid="MTAyMC8zNTgzMS8xMjM2Nw">
+                    <script type="text/javascript">
+                        (function(d, s) {
+                            var j, e = d.getElementsByTagName(s)[0];
+
+                            if (typeof LivereTower === 'function') { return; }
+
+                            j = d.createElement(s);
+                            j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+                            j.async = true;
+
+                            e.parentNode.insertBefore(j, e);
+                        })(document, 'script');
+                    </script>
+                    <noscript> 为正常使用来必力评论功能请激活JavaScript</noscript>
+                </div>
+                <!-- City版安装代码已完成 -->
+                
+            </div>
+
+            <div class="hidden-xs col-sm-3 toc-col">
+                <div class="toc-wrap">
+                    <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-懒汉单例模式"><span class="toc-text">1. 懒汉单例模式</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-DCL单例模式（Double-CheckLock）"><span class="toc-text">2. DCL单例模式（Double CheckLock）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-最常用的单例模式"><span class="toc-text">3. 最常用的单例模式</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-枚举单例"><span class="toc-text">4. 枚举单例</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-使用容器实现单例模式"><span class="toc-text">5. 使用容器实现单例模式</span></a></li></ol>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Sidebar Container -->
+
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+
+                <!-- Friends Blog -->
+                
+                <div style="margin-top: 20px;">
+                    <h5 class="text-center">友链</h5>
+                    <ul class="list-inline text-center">
+                        
+                        <li><a href="http://liangfei.me/">梁飞</a></li>
+                        
+                        <li><a href="https://geminiwen.com/">温省长</a></li>
+                        
+                    </ul>
+                </div>
+                
+            </div>
+        </div>
+
+    </div>
+</article>
+
+
+
+
+
+
+
+<!-- Footer -->
+<!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 text-center">
+                <br>
+                <ul class="list-inline text-center">
+                
+                
+                
+
+                
+
+                
+
+                
+                    <li>
+                        <a target="_blank"  href="https://github.com/shaomaicheng">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                
+
+                
+
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; 烧麦 2018
+                    <br>
+                    <!-- <span id="busuanzi_container_site_pv" style="font-size: 12px;">PV: <span id="busuanzi_value_site_pv"></span> Times</span>
+                    <br>
+                    Theme by <a href="https://haojen.github.io/">Haojen Ma</a> -->
+                </p>
+
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js"></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js"></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/blog.js"></script>
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("http://shaomaicheng.github.io/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("//cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+<!-- Google Analytics -->
+
+
+
+<!-- Baidu Tongji -->
+
+
+<!-- swiftype -->
+<script type="text/javascript">
+  (function(w,d,t,u,n,s,e){w['SwiftypeObject']=n;w[n]=w[n]||function(){
+  (w[n].q=w[n].q||[]).push(arguments);};s=d.createElement(t);
+  e=d.getElementsByTagName(t)[0];s.async=1;s.src=u;e.parentNode.insertBefore(s,e);
+  })(window,document,'script','//s.swiftypecdn.com/install/v2/st.js','_st');
+
+  _st('install','','2.0.0');
+</script>
+
+<script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<!--wechat title img-->
+<img class="wechat-title-img" src="https://oe9nbfytu.qnssl.com/subject%2F6c138472714d41aba7d219fc5a896940">
+</body>
+
+</html>
